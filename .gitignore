@@ -1,0 +1,28 @@
+# Unity generated files
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+[Cc]aptures/
+
+# Unity generated IDE files
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+.vs/
+.idea/
+.vscode/
+.gradle/
+ExportedObj/
+*.unitypackage
+
+# OS files
+.DS_Store
+Thumbs.db
