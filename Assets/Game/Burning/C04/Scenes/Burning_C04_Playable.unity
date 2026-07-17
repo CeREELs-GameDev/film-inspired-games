@@ -643,18 +643,19 @@ MonoBehaviour:
   watch: {fileID: 710496705}
   watchRect: {fileID: 710496702}
   openingHold: 0.45
-  capsuleAppearDuration: 0.55
+  capsuleAppearDuration: 0.68
   capsuleStartScale: 0.84
-  capsuleScalePop: 0.06
+  capsuleScalePop: 0.075
+  capsuleSettleDip: 0.018
   capsuleHold: 0.35
-  capsuleOpenDuration: 0.7
+  capsuleOpenDuration: 0.46
   capsuleUpOffset: {x: 95, y: 130}
   capsuleDownOffset: {x: -70, y: -150}
   capsuleUpRotation: -10
   capsuleDownRotation: 8
   openedCapsuleAlpha: 0.16
-  watchAppearDelay: 0.15
-  watchFadeDuration: 0.5
+  watchAppearDelay: 0.08
+  watchFadeDuration: 0.42
   rewardHold: 0.35
   playOnStart: 1
   onCapsuleAppeared:

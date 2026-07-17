@@ -19,13 +19,14 @@ namespace FilmInspiredGames.Burning.C04
 
         [Header("등장")]
         [SerializeField, Min(0f)] private float openingHold = 0.45f;
-        [SerializeField, Min(0.01f)] private float capsuleAppearDuration = 0.55f;
+        [SerializeField, Min(0.01f)] private float capsuleAppearDuration = 0.68f;
         [SerializeField, Range(0.5f, 1f)] private float capsuleStartScale = 0.84f;
-        [SerializeField, Range(0f, 0.2f)] private float capsuleScalePop = 0.06f;
+        [SerializeField, Range(0f, 0.2f)] private float capsuleScalePop = 0.075f;
+        [SerializeField, Range(0f, 0.1f)] private float capsuleSettleDip = 0.018f;
         [SerializeField, Min(0f)] private float capsuleHold = 0.35f;
 
         [Header("열림")]
-        [SerializeField, Min(0.01f)] private float capsuleOpenDuration = 0.7f;
+        [SerializeField, Min(0.01f)] private float capsuleOpenDuration = 0.46f;
         [SerializeField] private Vector2 capsuleUpOffset = new(95f, 130f);
         [SerializeField] private Vector2 capsuleDownOffset = new(-70f, -150f);
         [SerializeField] private float capsuleUpRotation = -10f;
@@ -33,8 +34,8 @@ namespace FilmInspiredGames.Burning.C04
         [SerializeField, Range(0f, 1f)] private float openedCapsuleAlpha = 0.16f;
 
         [Header("시계")]
-        [SerializeField, Min(0f)] private float watchAppearDelay = 0.15f;
-        [SerializeField, Min(0.01f)] private float watchFadeDuration = 0.5f;
+        [SerializeField, Min(0f)] private float watchAppearDelay = 0.08f;
+        [SerializeField, Min(0.01f)] private float watchFadeDuration = 0.42f;
         [SerializeField, Min(0f)] private float rewardHold = 0.35f;
         [SerializeField] private bool playOnStart = true;
 
@@ -116,12 +117,11 @@ namespace FilmInspiredGames.Burning.C04
             {
                 elapsed += Time.unscaledDeltaTime;
                 float normalized = Mathf.Clamp01(elapsed / capsuleAppearDuration);
-                float eased = Mathf.SmoothStep(0f, 1f, normalized);
-                float scale = Mathf.LerpUnclamped(capsuleStartScale, 1f, eased)
-                    + Mathf.Sin(normalized * Mathf.PI) * capsuleScalePop;
+                float alpha = EaseOutCubic(normalized);
+                float scale = EvaluateCapsulePop(normalized);
 
-                SetAlpha(capsuleUp, eased);
-                SetAlpha(capsuleDown, eased);
+                SetAlpha(capsuleUp, alpha);
+                SetAlpha(capsuleDown, alpha);
                 SetScale(capsuleUpRect, scale);
                 SetScale(capsuleDownRect, scale);
                 yield return null;
@@ -141,18 +141,40 @@ namespace FilmInspiredGames.Burning.C04
             {
                 elapsed += Time.unscaledDeltaTime;
                 float normalized = Mathf.Clamp01(elapsed / capsuleOpenDuration);
-                float eased = Mathf.SmoothStep(0f, 1f, normalized);
+                float movement = EaseOutBack(normalized, 0.85f);
+                float fade = EaseOutCubic(normalized);
 
-                AnimateCapsulePiece(capsuleUp, capsuleUpRect, capsuleUpOffset, capsuleUpRotation, eased);
-                AnimateCapsulePiece(capsuleDown, capsuleDownRect, capsuleDownOffset, capsuleDownRotation, eased);
+                AnimateCapsulePiece(capsuleUp, capsuleUpRect, capsuleUpOffset, capsuleUpRotation, movement, fade);
+                AnimateCapsulePiece(capsuleDown, capsuleDownRect, capsuleDownOffset, capsuleDownRotation, movement, fade);
 
                 float watchNormalized = Mathf.Clamp01((elapsed - watchAppearDelay) / watchFadeDuration);
                 SetAlpha(watch, Mathf.SmoothStep(0f, 1f, watchNormalized));
                 yield return null;
             }
 
-            AnimateCapsulePiece(capsuleUp, capsuleUpRect, capsuleUpOffset, capsuleUpRotation, 1f);
-            AnimateCapsulePiece(capsuleDown, capsuleDownRect, capsuleDownOffset, capsuleDownRotation, 1f);
+            AnimateCapsulePiece(capsuleUp, capsuleUpRect, capsuleUpOffset, capsuleUpRotation, 1f, 1f);
+            AnimateCapsulePiece(capsuleDown, capsuleDownRect, capsuleDownOffset, capsuleDownRotation, 1f, 1f);
+        }
+
+        private float EvaluateCapsulePop(float normalized)
+        {
+            const float popEnd = 0.62f;
+            const float reboundEnd = 0.84f;
+
+            if (normalized < popEnd)
+            {
+                float t = EaseOutCubic(normalized / popEnd);
+                return Mathf.LerpUnclamped(capsuleStartScale, 1f + capsuleScalePop, t);
+            }
+
+            if (normalized < reboundEnd)
+            {
+                float t = Mathf.SmoothStep(0f, 1f, (normalized - popEnd) / (reboundEnd - popEnd));
+                return Mathf.LerpUnclamped(1f + capsuleScalePop, 1f - capsuleSettleDip, t);
+            }
+
+            float settle = Mathf.SmoothStep(0f, 1f, (normalized - reboundEnd) / (1f - reboundEnd));
+            return Mathf.LerpUnclamped(1f - capsuleSettleDip, 1f, settle);
         }
 
         private void AnimateCapsulePiece(
@@ -160,17 +182,31 @@ namespace FilmInspiredGames.Burning.C04
             RectTransform rect,
             Vector2 offset,
             float rotation,
-            float normalized)
+            float movement,
+            float fade)
         {
-            SetAlpha(group, Mathf.LerpUnclamped(1f, openedCapsuleAlpha, normalized));
+            SetAlpha(group, Mathf.LerpUnclamped(1f, openedCapsuleAlpha, fade));
 
             if (rect == null)
             {
                 return;
             }
 
-            rect.anchoredPosition = Vector2.LerpUnclamped(Vector2.zero, offset, normalized);
-            rect.localRotation = Quaternion.Euler(0f, 0f, Mathf.LerpUnclamped(0f, rotation, normalized));
+            rect.anchoredPosition = Vector2.LerpUnclamped(Vector2.zero, offset, movement);
+            rect.localRotation = Quaternion.Euler(0f, 0f, Mathf.LerpUnclamped(0f, rotation, movement));
+        }
+
+        private static float EaseOutCubic(float value)
+        {
+            float inverse = 1f - Mathf.Clamp01(value);
+            return 1f - inverse * inverse * inverse;
+        }
+
+        private static float EaseOutBack(float value, float overshoot)
+        {
+            float shifted = Mathf.Clamp01(value) - 1f;
+            return 1f + (overshoot + 1f) * shifted * shifted * shifted
+                + overshoot * shifted * shifted;
         }
 
         private static IEnumerator Fade(CanvasGroup group, float from, float to, float duration)

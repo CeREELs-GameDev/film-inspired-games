@@ -71,7 +71,18 @@ namespace FilmInspiredGames.Burning.C04.Editor
             serialized.FindProperty("capsuleDownRect").objectReferenceValue = capsuleDown.rectTransform;
             serialized.FindProperty("watch").objectReferenceValue = watchGroup;
             serialized.FindProperty("watchRect").objectReferenceValue = watch.rectTransform;
+            ConfigureTiming(serialized);
             serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void ConfigureTiming(SerializedObject serialized)
+        {
+            serialized.FindProperty("capsuleAppearDuration").floatValue = 0.68f;
+            serialized.FindProperty("capsuleScalePop").floatValue = 0.075f;
+            serialized.FindProperty("capsuleSettleDip").floatValue = 0.018f;
+            serialized.FindProperty("capsuleOpenDuration").floatValue = 0.46f;
+            serialized.FindProperty("watchAppearDelay").floatValue = 0.08f;
+            serialized.FindProperty("watchFadeDuration").floatValue = 0.42f;
         }
 
         private static void CreateCameraAndLight()
