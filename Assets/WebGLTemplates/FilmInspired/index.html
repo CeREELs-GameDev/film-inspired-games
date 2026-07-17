@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="theme-color" content="#0a0a0a">
+    <title>{{{ PRODUCT_NAME }}}</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #0a0a0a; }
+      body { display: grid; place-items: center; font-family: Arial, sans-serif; }
+      #unity-container { position: relative; width: min(100vw, 56.25dvh); height: min(100dvh, 177.78vw); background: #000; }
+      #unity-canvas { display: block; width: 100%; height: 100%; background: #000; outline: none; touch-action: none; }
+      #loading { position: absolute; inset: 0; display: grid; place-items: center; background: #0a0a0a; transition: opacity 240ms ease; }
+      #progress-track { width: 42%; height: 3px; overflow: hidden; background: #383838; }
+      #progress { width: 0; height: 100%; background: #d6d0c4; transition: width 120ms linear; }
+      #warning { position: absolute; top: 0; left: 0; right: 0; z-index: 2; color: #fff; text-align: center; }
+      #warning div { padding: 10px 14px; background: #8f2d2d; }
+    </style>
+  </head>
+  <body>
+    <main id="unity-container">
+      <canvas id="unity-canvas" width={{{ WIDTH }}} height={{{ HEIGHT }}} tabindex="-1"></canvas>
+      <div id="loading" aria-label="Loading">
+        <div id="progress-track"><div id="progress"></div></div>
+      </div>
+      <div id="warning"></div>
+    </main>
+    <script>
+      const canvas = document.querySelector("#unity-canvas");
+      const loading = document.querySelector("#loading");
+      const progress = document.querySelector("#progress");
+      const warning = document.querySelector("#warning");
+      const buildUrl = "Build";
+      const loaderUrl = buildUrl + "/{{{ LOADER_FILENAME }}}";
+
+      function showBanner(message, type) {
+        const item = document.createElement("div");
+        item.textContent = message;
+        warning.appendChild(item);
+        if (type !== "error") setTimeout(() => item.remove(), 5000);
+      }
+
+      const config = {
+        arguments: [],
+        dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}",
+        frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+#if USE_THREADS
+        workerUrl: buildUrl + "/{{{ WORKER_FILENAME }}}",
+#endif
+#if USE_WASM
+        codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}",
+#endif
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+        productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+        productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+        showBanner
+      };
+
+      if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) config.devicePixelRatio = 1;
+
+      const script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, value => {
+          progress.style.width = `${value * 100}%`;
+        }).then(() => {
+          loading.style.opacity = "0";
+          loading.style.pointerEvents = "none";
+          setTimeout(() => loading.remove(), 260);
+          canvas.focus();
+        }).catch(message => showBanner(message, "error"));
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>
