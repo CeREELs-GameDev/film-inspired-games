@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.InputSystem;
 
 namespace FilmInspiredGames.Burning.C04
 {
@@ -25,6 +26,13 @@ namespace FilmInspiredGames.Burning.C04
         [SerializeField, Range(0f, 0.1f)] private float capsuleSettleDip = 0.018f;
         [SerializeField, Min(0f)] private float capsuleHold = 0.35f;
 
+        [Header("입력 대기")]
+        [SerializeField, Min(0.1f)] private float idlePulseDuration = 1f;
+        [SerializeField, Range(0f, 0.1f)] private float idleScaleAmount = 0.025f;
+        [SerializeField, Min(0f)] private float idleLiftAmount = 8f;
+        [SerializeField] private Vector2 capsuleHitAreaMin = new(0.14f, 0.27f);
+        [SerializeField] private Vector2 capsuleHitAreaMax = new(0.86f, 0.72f);
+
         [Header("열림")]
         [SerializeField, Min(0.01f)] private float capsuleOpenDuration = 0.46f;
         [SerializeField] private Vector2 capsuleUpOffset = new(95f, 130f);
@@ -45,8 +53,10 @@ namespace FilmInspiredGames.Burning.C04
         [SerializeField] private UnityEvent onRewardShown;
 
         private Coroutine sequenceRoutine;
+        private bool openRequested;
 
         public event Action Finished;
+        public bool IsWaitingForOpen { get; private set; }
 
         private void Start()
         {
@@ -58,11 +68,40 @@ namespace FilmInspiredGames.Burning.C04
             }
         }
 
+        private void Update()
+        {
+            if (!IsWaitingForOpen)
+            {
+                return;
+            }
+
+            if (Mouse.current?.leftButton.wasPressedThisFrame == true
+                && IsInsideCapsule(Mouse.current.position.ReadValue()))
+            {
+                RequestOpen();
+                return;
+            }
+
+            if (Touchscreen.current?.primaryTouch.press.wasPressedThisFrame == true
+                && IsInsideCapsule(Touchscreen.current.primaryTouch.position.ReadValue()))
+            {
+                RequestOpen();
+            }
+        }
+
         public void Play()
         {
             StopSequence();
             Prepare();
             sequenceRoutine = StartCoroutine(PlayRoutine());
+        }
+
+        public void RequestOpen()
+        {
+            if (IsWaitingForOpen)
+            {
+                openRequested = true;
+            }
         }
 
         public void StopSequence()
@@ -74,6 +113,8 @@ namespace FilmInspiredGames.Burning.C04
 
             StopCoroutine(sequenceRoutine);
             sequenceRoutine = null;
+            IsWaitingForOpen = false;
+            openRequested = false;
         }
 
         private void Prepare()
@@ -85,6 +126,8 @@ namespace FilmInspiredGames.Burning.C04
             ResetRect(capsuleUpRect, capsuleStartScale);
             ResetRect(capsuleDownRect, capsuleStartScale);
             ResetRect(watchRect, 1f);
+            IsWaitingForOpen = false;
+            openRequested = false;
         }
 
         private IEnumerator PlayRoutine()
@@ -93,7 +136,7 @@ namespace FilmInspiredGames.Burning.C04
             yield return AnimateCapsuleAppearance();
             onCapsuleAppeared?.Invoke();
 
-            yield return new WaitForSecondsRealtime(capsuleHold);
+            yield return AnimateCapsuleIdleUntilClicked();
             yield return AnimateCapsuleOpening();
             onCapsuleOpened?.Invoke();
 
@@ -133,6 +176,29 @@ namespace FilmInspiredGames.Burning.C04
             SetScale(capsuleDownRect, 1f);
         }
 
+        private IEnumerator AnimateCapsuleIdleUntilClicked()
+        {
+            IsWaitingForOpen = true;
+            float elapsed = 0f;
+
+            while (!openRequested || elapsed < capsuleHold)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float phase = elapsed / idlePulseDuration * Mathf.PI * 2f;
+                float pulse = (1f - Mathf.Cos(phase)) * 0.5f;
+                float scale = 1f + pulse * idleScaleAmount;
+                float lift = pulse * idleLiftAmount;
+
+                SetIdlePose(capsuleUpRect, scale, lift);
+                SetIdlePose(capsuleDownRect, scale, lift);
+                yield return null;
+            }
+
+            IsWaitingForOpen = false;
+            SetIdlePose(capsuleUpRect, 1f, 0f);
+            SetIdlePose(capsuleDownRect, 1f, 0f);
+        }
+
         private IEnumerator AnimateCapsuleOpening()
         {
             float elapsed = 0f;
@@ -141,7 +207,7 @@ namespace FilmInspiredGames.Burning.C04
             {
                 elapsed += Time.unscaledDeltaTime;
                 float normalized = Mathf.Clamp01(elapsed / capsuleOpenDuration);
-                float movement = EaseOutBack(normalized, 0.85f);
+                float movement = EaseOutBack(normalized, 1.35f);
                 float fade = EaseOutCubic(normalized);
 
                 AnimateCapsulePiece(capsuleUp, capsuleUpRect, capsuleUpOffset, capsuleUpRotation, movement, fade);
@@ -234,6 +300,40 @@ namespace FilmInspiredGames.Burning.C04
             rect.anchoredPosition = Vector2.zero;
             rect.localRotation = Quaternion.identity;
             SetScale(rect, scale);
+        }
+
+        private static void SetIdlePose(RectTransform rect, float scale, float lift)
+        {
+            if (rect == null)
+            {
+                return;
+            }
+
+            rect.anchoredPosition = new Vector2(0f, lift);
+            SetScale(rect, scale);
+        }
+
+        private bool IsInsideCapsule(Vector2 screenPosition)
+        {
+            if (capsuleUpRect == null
+                || !RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    capsuleUpRect,
+                    screenPosition,
+                    null,
+                    out Vector2 localPosition))
+            {
+                return false;
+            }
+
+            Rect rect = capsuleUpRect.rect;
+            Vector2 normalized = new(
+                Mathf.InverseLerp(rect.xMin, rect.xMax, localPosition.x),
+                Mathf.InverseLerp(rect.yMin, rect.yMax, localPosition.y));
+
+            return normalized.x >= capsuleHitAreaMin.x
+                && normalized.x <= capsuleHitAreaMax.x
+                && normalized.y >= capsuleHitAreaMin.y
+                && normalized.y <= capsuleHitAreaMax.y;
         }
 
         private static void SetScale(RectTransform rect, float scale)
