@@ -4,6 +4,7 @@ using FilmInspiredGames.Burning.C02;
 using FilmInspiredGames.Burning.C04;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 namespace FilmInspiredGames.Burning
 {
@@ -22,6 +23,7 @@ namespace FilmInspiredGames.Burning
             C03ToC04,
             C04Playing,
             C04Complete,
+            C04ToC08,
             Complete
         }
 
@@ -45,6 +47,11 @@ namespace FilmInspiredGames.Burning
         [Header("C04")]
         [SerializeField] private C04RewardSequenceController c04Sequence;
 
+        [Header("다음 장면")]
+        [SerializeField] private string nextSceneName = "Burning_C08_C12_Playable";
+        [SerializeField, Min(0.01f)] private float nextSceneFadeDuration = 1.5f;
+        [SerializeField, Min(0f)] private float nextSceneFadeHold = 0.2f;
+
         [Header("장면 신호")]
         [SerializeField] private UnityEvent onC01Started;
         [SerializeField] private UnityEvent onC02Started;
@@ -62,7 +69,7 @@ namespace FilmInspiredGames.Burning
             Step.C01 or Step.C01ToC02 => "C01",
             Step.C02Playing or Step.C02Complete or Step.C02ToC03 => "C02",
             Step.C03First or Step.C03ToSecond or Step.C03Second or Step.C03ToC04 => "C03",
-            Step.C04Playing or Step.C04Complete => "C04",
+            Step.C04Playing or Step.C04Complete or Step.C04ToC08 => "C04",
             Step.Complete => "완료",
             _ => "-"
         };
@@ -80,6 +87,7 @@ namespace FilmInspiredGames.Burning
             Step.C03ToC04 => "C03 → C04 전환",
             Step.C04Playing => "C04 보상 연출 진행 중",
             Step.C04Complete => "C04 보상 연출 완료",
+            Step.C04ToC08 => "C04 → C08 전환",
             Step.Complete => "1막 완료",
             _ => "-"
         };
@@ -132,7 +140,7 @@ namespace FilmInspiredGames.Burning
                     transitionRoutine = StartCoroutine(TransitionToC04());
                     break;
                 case Step.C04Complete:
-                    CompleteAct();
+                    transitionRoutine = StartCoroutine(TransitionToC08());
                     break;
             }
         }
@@ -247,6 +255,22 @@ namespace FilmInspiredGames.Burning
             {
                 currentStep = Step.C04Complete;
             }
+        }
+
+        private IEnumerator TransitionToC08()
+        {
+            if (!Application.CanStreamedLevelBeLoaded(nextSceneName))
+            {
+                Debug.LogError($"다음 씬을 불러올 수 없습니다: {nextSceneName}", this);
+                transitionRoutine = null;
+                yield break;
+            }
+
+            currentStep = Step.C04ToC08;
+            yield return FadeTo(1f, nextSceneFadeDuration);
+            yield return new WaitForSecondsRealtime(nextSceneFadeHold);
+            CompleteAct();
+            SceneManager.LoadScene(nextSceneName);
         }
 
         private void CompleteAct()

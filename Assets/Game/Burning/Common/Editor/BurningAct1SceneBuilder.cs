@@ -14,6 +14,7 @@ namespace FilmInspiredGames.Burning.Editor
     {
         private const string C02ScenePath = "Assets/Game/Burning/C02/Scenes/Burning_C02_Playable.unity";
         private const string ActScenePath = "Assets/Game/Burning/Scenes/Burning_Act1_Playable.unity";
+        private const string NextScenePath = "Assets/Game/Burning/C08/Scenes/Burning_C08_C12_Playable.unity";
         private const string C01ArtPath = "Assets/Game/Burning/C01/Art/C01_Walk.png";
         private const string C03FirstPath = "Assets/Game/Burning/C03/Art/C03_First.png";
         private const string C03SecondPath = "Assets/Game/Burning/C03/Art/C03_Second.png";
@@ -192,6 +193,9 @@ namespace FilmInspiredGames.Burning.Editor
             serialized.FindProperty("fadeOutDuration").floatValue = 0.65f;
             serialized.FindProperty("fadeHoldDuration").floatValue = 0.18f;
             serialized.FindProperty("fadeInDuration").floatValue = 0.8f;
+            serialized.FindProperty("nextSceneName").stringValue = "Burning_C08_C12_Playable";
+            serialized.FindProperty("nextSceneFadeDuration").floatValue = 1.5f;
+            serialized.FindProperty("nextSceneFadeHold").floatValue = 0.2f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -309,10 +313,12 @@ namespace FilmInspiredGames.Burning.Editor
         private static void AddSceneToBuildSettings()
         {
             List<EditorBuildSettingsScene> scenes = EditorBuildSettings.scenes
-                .Where(item => item.path != ActScenePath)
+                .Where(item => item.path != ActScenePath && item.path != NextScenePath)
                 .ToList();
+            scenes.Insert(0, new EditorBuildSettingsScene(NextScenePath, true));
             scenes.Insert(0, new EditorBuildSettingsScene(ActScenePath, true));
             EditorBuildSettings.scenes = scenes.ToArray();
+            AssetDatabase.SaveAssets();
         }
     }
 }

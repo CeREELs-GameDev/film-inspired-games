@@ -9,7 +9,7 @@
 - Unity: `6000.0.67f1`
 - 템플릿: Universal 2D
 - 목표 화면: 세로 9:16
-- 기본 시작 씬: `Assets/Scenes/SampleScene.unity`
+- 기본 시작 씬: `Assets/Game/Burning/Scenes/Burning_Act1_Playable.unity`
 
 ## 폴더
 

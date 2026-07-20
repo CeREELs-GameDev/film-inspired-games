@@ -12,7 +12,7 @@
 - Unity 버전: `6000.0.67f1`
 - 템플릿: Universal 2D
 - 목표 화면: 세로 9:16, 기본 창 크기 `540x960`
-- 현재 시작 씬: `Assets/Scenes/SampleScene.unity`
+- 현재 시작 씬: `Assets/Game/Burning/Scenes/Burning_Act1_Playable.unity`
 - 런타임 에셋: `Assets/Game/`
 - 원본·reference: `assets-src/`
 - 큰 런타임 아트: Addressables 도입 전까지 직접 참조로 시작, 커지면 이동 검토

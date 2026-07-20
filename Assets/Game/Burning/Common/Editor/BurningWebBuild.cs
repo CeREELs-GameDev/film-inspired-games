@@ -9,6 +9,7 @@ namespace FilmInspiredGames.Burning.Editor
     public static class BurningWebBuild
     {
         private const string ScenePath = "Assets/Game/Burning/Scenes/Burning_Act1_Playable.unity";
+        private const string NextScenePath = "Assets/Game/Burning/C08/Scenes/Burning_C08_C12_Playable.unity";
         private const string OutputPath = "Builds/Web";
 
         [MenuItem("Tools/Burning/Build Web for GitHub Pages")]
@@ -24,7 +25,7 @@ namespace FilmInspiredGames.Burning.Editor
 
             BuildPlayerOptions options = new()
             {
-                scenes = new[] { ScenePath },
+                scenes = new[] { ScenePath, NextScenePath },
                 locationPathName = OutputPath,
                 target = BuildTarget.WebGL,
                 options = BuildOptions.None
