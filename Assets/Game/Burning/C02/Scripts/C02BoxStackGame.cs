@@ -185,7 +185,7 @@ namespace FilmInspiredGames.Burning.C02
             Rect boxRect = box.GetVisibleScreenRect(eventCamera);
             Rect slotRect = GetScreenRect(targetSlot, eventCamera);
 
-            if (CalculateOverlap(boxRect, slotRect) < requiredPlacementOverlap)
+            if (!IsWithinPlacementRange(boxRect, slotRect, requiredPlacementOverlap))
             {
                 return false;
             }
@@ -203,12 +203,16 @@ namespace FilmInspiredGames.Burning.C02
             return true;
         }
 
-        private static float CalculateOverlap(Rect boxRect, Rect slotRect)
+        private static bool IsWithinPlacementRange(Rect boxRect, Rect slotRect, float requiredAlignment)
         {
-            float width = Mathf.Max(0f, Mathf.Min(boxRect.xMax, slotRect.xMax) - Mathf.Max(boxRect.xMin, slotRect.xMin));
-            float height = Mathf.Max(0f, Mathf.Min(boxRect.yMax, slotRect.yMax) - Mathf.Max(boxRect.yMin, slotRect.yMin));
-            float boxArea = boxRect.width * boxRect.height;
-            return boxArea > 0f ? width * height / boxArea : 0f;
+            if (boxRect.width <= 0f || boxRect.height <= 0f)
+            {
+                return false;
+            }
+
+            float horizontalAlignment = 1f - Mathf.Abs(boxRect.center.x - slotRect.center.x) / boxRect.width;
+            float verticalAlignment = 1f - Mathf.Abs(boxRect.center.y - slotRect.center.y) / boxRect.height;
+            return horizontalAlignment >= requiredAlignment && verticalAlignment >= requiredAlignment;
         }
 
         private static Rect GetScreenRect(RectTransform rectTransform, Camera eventCamera)
