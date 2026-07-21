@@ -26,18 +26,33 @@ namespace FilmInspiredGames.Burning.Editor
                 return;
             }
 
+            string[] scenes =
+            {
+                ScenePath, C06ScenePath, C08ScenePath, C13ScenePath,
+                C14ScenePath, C15ScenePath, C16ScenePath
+            };
+
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+            foreach (string scene in scenes)
+            {
+                AssetDatabase.ImportAsset(
+                    scene,
+                    ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+            }
+
+            if (Directory.Exists(OutputPath))
+            {
+                Directory.Delete(OutputPath, true);
+            }
+
             Directory.CreateDirectory(OutputPath);
 
             BuildPlayerOptions options = new()
             {
-                scenes = new[]
-                {
-                    ScenePath, C06ScenePath, C08ScenePath, C13ScenePath,
-                    C14ScenePath, C15ScenePath, C16ScenePath
-                },
+                scenes = scenes,
                 locationPathName = OutputPath,
                 target = BuildTarget.WebGL,
-                options = BuildOptions.None
+                options = BuildOptions.CleanBuildCache
             };
 
             BuildReport report = BuildPipeline.BuildPlayer(options);
