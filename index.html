@@ -32,7 +32,8 @@
       const progress = document.querySelector("#progress");
       const warning = document.querySelector("#warning");
       const buildUrl = "Build";
-      const loaderUrl = buildUrl + "/Web.loader.js";
+      const buildVersion = "31f6463";
+      const loaderUrl = buildUrl + "/Web.loader.js?v=" + buildVersion;
 
       function showBanner(message, type) {
         const item = document.createElement("div");
@@ -43,9 +44,9 @@
 
       const config = {
         arguments: [],
-        dataUrl: buildUrl + "/Web.data.unityweb",
-        frameworkUrl: buildUrl + "/Web.framework.js.unityweb",
-        codeUrl: buildUrl + "/Web.wasm.unityweb",
+        dataUrl: buildUrl + "/Web.data.unityweb?v=" + buildVersion,
+        frameworkUrl: buildUrl + "/Web.framework.js.unityweb?v=" + buildVersion,
+        codeUrl: buildUrl + "/Web.wasm.unityweb?v=" + buildVersion,
         streamingAssetsUrl: "StreamingAssets",
         companyName: "CeREELs",
         productName: "Film Inspired Games",
