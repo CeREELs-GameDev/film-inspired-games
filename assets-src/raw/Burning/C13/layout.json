@@ -1,0 +1,34 @@
+{
+  "C13_MinuteHand.png": {
+    "x": 594,
+    "y": 364,
+    "width": 96,
+    "height": 48,
+    "sourceWidth": 1632,
+    "sourceHeight": 2913
+  },
+  "C13_HourHand.png": {
+    "x": 591,
+    "y": 413,
+    "width": 24,
+    "height": 48,
+    "sourceWidth": 1632,
+    "sourceHeight": 2913
+  },
+  "C13_StopMark1.png": {
+    "x": 1016,
+    "y": 1913,
+    "width": 60,
+    "height": 48,
+    "sourceWidth": 1632,
+    "sourceHeight": 2913
+  },
+  "C13_StopMark2.png": {
+    "x": 829,
+    "y": 1947,
+    "width": 136,
+    "height": 188,
+    "sourceWidth": 1632,
+    "sourceHeight": 2913
+  }
+}

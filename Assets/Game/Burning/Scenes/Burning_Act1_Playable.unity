@@ -2287,7 +2287,7 @@ MonoBehaviour:
   fadeInDuration: 0.8
   c02Sequence: {fileID: 1943505325}
   c04Sequence: {fileID: 9623400}
-  nextSceneName: Burning_C08_C12_Playable
+  nextSceneName: Burning_C06_C07_Playable
   nextSceneFadeDuration: 1.5
   nextSceneFadeHold: 0.2
   onC01Started:

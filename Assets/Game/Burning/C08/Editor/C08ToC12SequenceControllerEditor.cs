@@ -16,6 +16,7 @@ namespace FilmInspiredGames.Burning.C08.Editor
                 EditorGUILayout.TextField("현재 챕터", sequence.CurrentChapter);
                 EditorGUILayout.TextField("현재 장면", sequence.CurrentState);
                 EditorGUILayout.Toggle("C11 터치 대기", sequence.IsWaitingForC11Touch);
+                EditorGUILayout.Toggle("C13 이동 대기", sequence.IsWaitingForNextScene);
             }
 
             EditorGUILayout.Space();

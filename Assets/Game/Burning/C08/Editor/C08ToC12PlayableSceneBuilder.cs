@@ -120,6 +120,8 @@ namespace FilmInspiredGames.Burning.C08.Editor
             Set(serialized, "c12Smile", chapters.C12Smile);
             Set(serialized, "c12Laugh", chapters.C12Laugh);
             Set(serialized, "blackOverlay", blackOverlay);
+            serialized.FindProperty("nextSceneName").stringValue = "Burning_C13_Playable";
+            serialized.FindProperty("nextSceneFadeDuration").floatValue = 1.5f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

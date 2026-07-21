@@ -23,7 +23,7 @@ namespace FilmInspiredGames.Burning
             C03ToC04,
             C04Playing,
             C04Complete,
-            C04ToC08,
+            C04ToC06,
             Complete
         }
 
@@ -48,7 +48,7 @@ namespace FilmInspiredGames.Burning
         [SerializeField] private C04RewardSequenceController c04Sequence;
 
         [Header("다음 장면")]
-        [SerializeField] private string nextSceneName = "Burning_C08_C12_Playable";
+        [SerializeField] private string nextSceneName = "Burning_C06_C07_Playable";
         [SerializeField, Min(0.01f)] private float nextSceneFadeDuration = 1.5f;
         [SerializeField, Min(0f)] private float nextSceneFadeHold = 0.2f;
 
@@ -69,7 +69,7 @@ namespace FilmInspiredGames.Burning
             Step.C01 or Step.C01ToC02 => "C01",
             Step.C02Playing or Step.C02Complete or Step.C02ToC03 => "C02",
             Step.C03First or Step.C03ToSecond or Step.C03Second or Step.C03ToC04 => "C03",
-            Step.C04Playing or Step.C04Complete or Step.C04ToC08 => "C04",
+            Step.C04Playing or Step.C04Complete or Step.C04ToC06 => "C04",
             Step.Complete => "완료",
             _ => "-"
         };
@@ -87,7 +87,7 @@ namespace FilmInspiredGames.Burning
             Step.C03ToC04 => "C03 → C04 전환",
             Step.C04Playing => "C04 보상 연출 진행 중",
             Step.C04Complete => "C04 보상 연출 완료",
-            Step.C04ToC08 => "C04 → C08 전환",
+            Step.C04ToC06 => "C04 → C06 전환",
             Step.Complete => "1막 완료",
             _ => "-"
         };
@@ -140,7 +140,7 @@ namespace FilmInspiredGames.Burning
                     transitionRoutine = StartCoroutine(TransitionToC04());
                     break;
                 case Step.C04Complete:
-                    transitionRoutine = StartCoroutine(TransitionToC08());
+                    transitionRoutine = StartCoroutine(TransitionToC06());
                     break;
             }
         }
@@ -257,7 +257,7 @@ namespace FilmInspiredGames.Burning
             }
         }
 
-        private IEnumerator TransitionToC08()
+        private IEnumerator TransitionToC06()
         {
             if (!Application.CanStreamedLevelBeLoaded(nextSceneName))
             {
@@ -266,7 +266,7 @@ namespace FilmInspiredGames.Burning
                 yield break;
             }
 
-            currentStep = Step.C04ToC08;
+            currentStep = Step.C04ToC06;
             yield return FadeTo(1f, nextSceneFadeDuration);
             yield return new WaitForSecondsRealtime(nextSceneFadeHold);
             CompleteAct();

@@ -9,11 +9,20 @@ EditorBuildSettings:
     path: Assets/Game/Burning/Scenes/Burning_Act1_Playable.unity
     guid: 47b5b73eb7908dc448322d9b2b62f147
   - enabled: 1
+    path: Assets/Game/Burning/C02/Scenes/Burning_C02_Playable.unity
+    guid: 734c972f4057f3640b1cfbf748143ac8
+  - enabled: 1
+    path: Assets/Game/Burning/C06/Scenes/Burning_C06_C07_Playable.unity
+    guid: ebf6a918bdbf1bc4d94cbd3dc64f7bb8
+  - enabled: 1
     path: Assets/Game/Burning/C08/Scenes/Burning_C08_C12_Playable.unity
     guid: 9d431496a896e5b4fbd80172e166837f
   - enabled: 1
-    path: Assets/Game/Burning/C02/Scenes/Burning_C02_Playable.unity
-    guid: 734c972f4057f3640b1cfbf748143ac8
+    path: Assets/Game/Burning/C13/Scenes/Burning_C13_Playable.unity
+    guid: 31269876d6f8a6d4b90da54c32dcf78d
+  - enabled: 1
+    path: Assets/Game/Burning/C14/Scenes/Burning_C14_Playable.unity
+    guid: 1b105cda59d804c4bb4f15c7a2e72ea6
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

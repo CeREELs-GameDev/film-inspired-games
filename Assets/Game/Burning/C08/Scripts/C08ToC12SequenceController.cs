@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 namespace FilmInspiredGames.Burning.C08
 {
@@ -57,13 +58,17 @@ namespace FilmInspiredGames.Burning.C08
         [SerializeField] private CanvasGroup blackOverlay;
         [SerializeField, Min(0.01f)] private float chapterFadeOutDuration = 1.5f;
         [SerializeField, Min(0.01f)] private float chapterFadeInDuration = 1.25f;
+        [SerializeField] private string nextSceneName = "Burning_C13_Playable";
+        [SerializeField, Min(0.01f)] private float nextSceneFadeDuration = 1.5f;
         [SerializeField] private bool playOnStart = true;
 
         private Coroutine sequenceRoutine;
         private bool c11TouchRequested;
+        private bool nextSceneRequested;
 
         public event Action Finished;
         public bool IsWaitingForC11Touch { get; private set; }
+        public bool IsWaitingForNextScene { get; private set; }
         public string CurrentChapter { get; private set; } = "재생 대기";
         public string CurrentState { get; private set; } = "대기";
 
@@ -79,15 +84,20 @@ namespace FilmInspiredGames.Burning.C08
 
         private void Update()
         {
-            if (!IsWaitingForC11Touch)
+            bool pressed = Mouse.current?.leftButton.wasPressedThisFrame == true
+                || Touchscreen.current?.primaryTouch.press.wasPressedThisFrame == true;
+            if (!pressed)
             {
                 return;
             }
 
-            if (Mouse.current?.leftButton.wasPressedThisFrame == true
-                || Touchscreen.current?.primaryTouch.press.wasPressedThisFrame == true)
+            if (IsWaitingForC11Touch)
             {
                 c11TouchRequested = true;
+            }
+            else if (IsWaitingForNextScene)
+            {
+                nextSceneRequested = true;
             }
         }
 
@@ -107,7 +117,9 @@ namespace FilmInspiredGames.Burning.C08
             }
 
             IsWaitingForC11Touch = false;
+            IsWaitingForNextScene = false;
             c11TouchRequested = false;
+            nextSceneRequested = false;
         }
 
         private void Prepare()
@@ -133,7 +145,9 @@ namespace FilmInspiredGames.Burning.C08
             }
 
             IsWaitingForC11Touch = false;
+            IsWaitingForNextScene = false;
             c11TouchRequested = false;
+            nextSceneRequested = false;
             CurrentChapter = "재생 대기";
             CurrentState = "대기";
         }
@@ -148,6 +162,25 @@ namespace FilmInspiredGames.Burning.C08
             yield return PlayC11();
             yield return TransitionChapter(c11Root, c12Root, "C12", "시계를 받은 해미");
             yield return PlayC12();
+
+            IsWaitingForNextScene = true;
+            CurrentState = "C13 이동 대기";
+            while (!nextSceneRequested)
+            {
+                yield return null;
+            }
+            IsWaitingForNextScene = false;
+
+            if (!Application.CanStreamedLevelBeLoaded(nextSceneName))
+            {
+                Debug.LogError($"다음 씬을 불러올 수 없습니다: {nextSceneName}", this);
+                sequenceRoutine = null;
+                yield break;
+            }
+
+            CurrentState = "C13으로 전환";
+            yield return Fade(blackOverlay, blackOverlay.alpha, 1f, nextSceneFadeDuration);
+            SceneManager.LoadScene(nextSceneName);
 
             sequenceRoutine = null;
             Finished?.Invoke();
