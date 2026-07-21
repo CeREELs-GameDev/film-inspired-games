@@ -21,7 +21,7 @@ namespace FilmInspiredGames.Burning.C02
 
         [Header("놓을 자리")]
         [SerializeField] private List<RectTransform> targetSlots = new();
-        [SerializeField, Range(0.5f, 1f)] private float requiredPlacementOverlap = 0.9f;
+        [SerializeField, Range(0.5f, 1f)] private float requiredPlacementOverlap = 0.8f;
         [SerializeField] private bool fitBoxToSlot;
         [SerializeField] private bool preserveLayerAlignment;
         [SerializeField] private Vector2 alignedTargetPosition;
