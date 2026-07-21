@@ -85,7 +85,7 @@ namespace FilmInspiredGames.Burning
             Step.C03ToSecond => "C03 화면 전환",
             Step.C03Second => "C03 두 번째 화면",
             Step.C03ToC04 => "C03 → C04 전환",
-            Step.C04Playing => "C04 보상 연출 진행 중",
+            Step.C04Playing => c04Sequence != null ? c04Sequence.CurrentState : "C04 보상 연출 진행 중",
             Step.C04Complete => "C04 보상 연출 완료",
             Step.C04ToC06 => "C04 → C06 전환",
             Step.Complete => "1막 완료",

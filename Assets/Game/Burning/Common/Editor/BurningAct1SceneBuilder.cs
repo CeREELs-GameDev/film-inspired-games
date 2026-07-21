@@ -22,6 +22,8 @@ namespace FilmInspiredGames.Burning.Editor
         private const string C03FirstPath = "Assets/Game/Burning/C03/Art/C03_First.png";
         private const string C03SecondPath = "Assets/Game/Burning/C03/Art/C03_Second.png";
         private const string C04BackgroundPath = "Assets/Game/Burning/C04/Art/C04_Background.png";
+        private const string C04HandlePanelPath = "Assets/Game/Burning/C04/Art/C04_HandlePanel.png";
+        private const string C04HandlePath = "Assets/Game/Burning/C04/Art/C04_Handle.png";
         private const string C04CapsuleUpPath = "Assets/Game/Burning/C04/Art/C04_CapsuleUp.png";
         private const string C04CapsuleDownPath = "Assets/Game/Burning/C04/Art/C04_CapsuleDown.png";
         private const string C04WatchPath = "Assets/Game/Burning/C04/Art/C04_Watch.png";
@@ -39,6 +41,8 @@ namespace FilmInspiredGames.Burning.Editor
             PrepareSprite(C03FirstPath);
             PrepareSprite(C03SecondPath);
             PrepareSprite(C04BackgroundPath);
+            PrepareSprite(C04HandlePanelPath);
+            PrepareSprite(C04HandlePath);
             PrepareSprite(C04CapsuleUpPath);
             PrepareSprite(C04CapsuleDownPath);
             PrepareSprite(C04WatchPath);
@@ -104,6 +108,10 @@ namespace FilmInspiredGames.Burning.Editor
             Image c03First = CreateFullScreenImage("C03_First", c03Root, LoadSprite(C03FirstPath));
             Image c03Second = CreateFullScreenImage("C03_Second", c03Root, LoadSprite(C03SecondPath));
             Image c04Background = CreateFullScreenImage("C04_Background", c04Root, LoadSprite(C04BackgroundPath));
+            CreateSourceAlignedImage(
+                "C04_HandlePanel", c04Root, LoadSprite(C04HandlePanelPath), new SourceLayout(331, 1728, 956, 762));
+            Image c04Handle = CreateSourceAlignedImage(
+                "C04_Handle", c04Root, LoadSprite(C04HandlePath), new SourceLayout(633, 2053, 368, 79));
             Image c04CapsuleUp = CreateFullScreenImage("C04_CapsuleUp", c04Root, LoadSprite(C04CapsuleUpPath));
             Image c04CapsuleDown = CreateFullScreenImage("C04_CapsuleDown", c04Root, LoadSprite(C04CapsuleDownPath));
             Image c04Watch = CreateFullScreenImage("C04_Watch", c04Root, LoadSprite(C04WatchPath));
@@ -133,6 +141,7 @@ namespace FilmInspiredGames.Burning.Editor
             C04RewardSequenceController c04Sequence = c04SequenceObject.AddComponent<C04RewardSequenceController>();
             ConfigureC04Sequence(
                 c04Sequence,
+                c04Handle,
                 c04CapsuleUp,
                 c04CapsuleDown,
                 c04Watch,
@@ -213,6 +222,7 @@ namespace FilmInspiredGames.Burning.Editor
 
         private static void ConfigureC04Sequence(
             C04RewardSequenceController sequence,
+            Image handle,
             Image capsuleUp,
             Image capsuleDown,
             Image watch,
@@ -221,6 +231,7 @@ namespace FilmInspiredGames.Burning.Editor
             CanvasGroup watchGroup)
         {
             SerializedObject serialized = new(sequence);
+            serialized.FindProperty("handleRect").objectReferenceValue = handle.rectTransform;
             serialized.FindProperty("capsuleUp").objectReferenceValue = capsuleUpGroup;
             serialized.FindProperty("capsuleDown").objectReferenceValue = capsuleDownGroup;
             serialized.FindProperty("capsuleUpRect").objectReferenceValue = capsuleUp.rectTransform;
@@ -268,6 +279,28 @@ namespace FilmInspiredGames.Burning.Editor
             Image image = imageObject.GetComponent<Image>();
             image.sprite = sprite;
             image.preserveAspect = false;
+            return image;
+        }
+
+        private static Image CreateSourceAlignedImage(
+            string name,
+            Transform parent,
+            Sprite sprite,
+            SourceLayout layout)
+        {
+            GameObject imageObject = new(name, typeof(RectTransform), typeof(Image));
+            RectTransform rect = imageObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(layout.Width * 540f / 1632f, layout.Height * 960f / 2912f);
+            rect.anchoredPosition = new Vector2(
+                (layout.X + layout.Width * 0.5f) * 540f / 1632f,
+                -(layout.Y + layout.Height * 0.5f) * 960f / 2912f);
+            Image image = imageObject.GetComponent<Image>();
+            image.sprite = sprite;
+            image.raycastTarget = false;
             return image;
         }
 
@@ -329,6 +362,22 @@ namespace FilmInspiredGames.Burning.Editor
             scenes.Insert(0, new EditorBuildSettingsScene(ActScenePath, true));
             EditorBuildSettings.scenes = scenes.ToArray();
             AssetDatabase.SaveAssets();
+        }
+
+        private readonly struct SourceLayout
+        {
+            public SourceLayout(float x, float y, float width, float height)
+            {
+                X = x;
+                Y = y;
+                Width = width;
+                Height = height;
+            }
+
+            public float X { get; }
+            public float Y { get; }
+            public float Width { get; }
+            public float Height { get; }
         }
     }
 }

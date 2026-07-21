@@ -8,6 +8,12 @@ namespace FilmInspiredGames.Burning.C04
 {
     public sealed class C04RewardSequenceController : MonoBehaviour
     {
+        [Header("손잡이")]
+        [SerializeField] private RectTransform handleRect;
+        [SerializeField, Min(30f)] private float handleInteractionRadius = 82f;
+        [SerializeField, Min(45f)] private float requiredHandleRotation = 180f;
+        [SerializeField, Min(0f)] private float handleCompleteHold = 0.25f;
+
         [Header("캡슐")]
         [SerializeField] private CanvasGroup capsuleUp;
         [SerializeField] private CanvasGroup capsuleDown;
@@ -54,12 +60,31 @@ namespace FilmInspiredGames.Burning.C04
 
         private Coroutine sequenceRoutine;
         private bool openRequested;
+        private bool draggingHandle;
+        private bool handleTurnComplete;
+        private bool hasTouchedHandle;
+        private float previousPointerAngle;
+        private float handleRotation;
+        private Vector2 handleStartPosition;
+        private Camera canvasCamera;
 
         public event Action Finished;
+        public bool IsWaitingForHandle { get; private set; }
         public bool IsWaitingForOpen { get; private set; }
+        public float HandleProgress => Mathf.Clamp01(handleRotation / requiredHandleRotation);
+        public string CurrentState { get; private set; } = "대기";
 
         private void Start()
         {
+            if (handleRect != null)
+            {
+                handleStartPosition = handleRect.anchoredPosition;
+            }
+
+            Canvas canvas = GetComponentInParent<Canvas>();
+            canvasCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? canvas.worldCamera
+                : null;
             Prepare();
 
             if (playOnStart)
@@ -70,20 +95,20 @@ namespace FilmInspiredGames.Burning.C04
 
         private void Update()
         {
+            ReadPointer(out Vector2 pointerPosition, out bool pressed, out bool held, out bool released);
+
+            if (IsWaitingForHandle)
+            {
+                UpdateHandle(pointerPosition, pressed, held, released);
+                return;
+            }
+
             if (!IsWaitingForOpen)
             {
                 return;
             }
 
-            if (Mouse.current?.leftButton.wasPressedThisFrame == true
-                && IsInsideCapsule(Mouse.current.position.ReadValue()))
-            {
-                RequestOpen();
-                return;
-            }
-
-            if (Touchscreen.current?.primaryTouch.press.wasPressedThisFrame == true
-                && IsInsideCapsule(Touchscreen.current.primaryTouch.position.ReadValue()))
+            if (pressed && IsInsideCapsule(pointerPosition))
             {
                 RequestOpen();
             }
@@ -113,6 +138,7 @@ namespace FilmInspiredGames.Burning.C04
 
             StopCoroutine(sequenceRoutine);
             sequenceRoutine = null;
+            IsWaitingForHandle = false;
             IsWaitingForOpen = false;
             openRequested = false;
         }
@@ -123,20 +149,32 @@ namespace FilmInspiredGames.Burning.C04
             SetAlpha(capsuleDown, 0f);
             SetAlpha(watch, 0f);
 
+            ResetHandle();
             ResetRect(capsuleUpRect, capsuleStartScale);
             ResetRect(capsuleDownRect, capsuleStartScale);
             ResetRect(watchRect, 1f);
+            IsWaitingForHandle = false;
             IsWaitingForOpen = false;
             openRequested = false;
+            draggingHandle = false;
+            handleTurnComplete = false;
+            hasTouchedHandle = false;
+            handleRotation = 0f;
+            CurrentState = "손잡이 돌리기 대기";
         }
 
         private IEnumerator PlayRoutine()
         {
             yield return new WaitForSecondsRealtime(openingHold);
+            yield return AnimateHandleUntilTurned();
+            yield return new WaitForSecondsRealtime(handleCompleteHold);
+
+            CurrentState = "캡슐 등장";
             yield return AnimateCapsuleAppearance();
             onCapsuleAppeared?.Invoke();
 
             yield return AnimateCapsuleIdleUntilClicked();
+            CurrentState = "캡슐 열리는 중";
             yield return AnimateCapsuleOpening();
             onCapsuleOpened?.Invoke();
 
@@ -146,10 +184,83 @@ namespace FilmInspiredGames.Burning.C04
             }
 
             onRewardShown?.Invoke();
+            CurrentState = "시계 획득";
             yield return new WaitForSecondsRealtime(rewardHold);
 
             sequenceRoutine = null;
             Finished?.Invoke();
+        }
+
+        private IEnumerator AnimateHandleUntilTurned()
+        {
+            IsWaitingForHandle = true;
+            CurrentState = "손잡이를 시계 방향으로 돌리기";
+            float hintTime = 0f;
+
+            while (!handleTurnComplete)
+            {
+                if (!draggingHandle && !hasTouchedHandle && handleRect != null)
+                {
+                    hintTime += Time.unscaledDeltaTime;
+                    float pulse = (1f - Mathf.Cos(hintTime * Mathf.PI * 1.6f)) * 0.5f;
+                    handleRect.localRotation = Quaternion.Euler(0f, 0f, -pulse * 7f);
+                }
+                yield return null;
+            }
+
+            IsWaitingForHandle = false;
+            CurrentState = "손잡이 회전 완료";
+            float start = handleRotation;
+            float elapsed = 0f;
+            const float snapDuration = 0.28f;
+
+            while (elapsed < snapDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / snapDuration);
+                float overshoot = Mathf.Sin(t * Mathf.PI) * 12f;
+                SetHandleRotation(Mathf.Lerp(start, requiredHandleRotation, EaseOutCubic(t)) + overshoot);
+                yield return null;
+            }
+
+            handleRotation = requiredHandleRotation;
+            SetHandleRotation(handleRotation);
+        }
+
+        private void UpdateHandle(Vector2 pointerPosition, bool pressed, bool held, bool released)
+        {
+            if (pressed && IsInsideHandle(pointerPosition))
+            {
+                draggingHandle = true;
+                hasTouchedHandle = true;
+                previousPointerAngle = PointerAngle(pointerPosition);
+                SetHandleRotation(handleRotation);
+            }
+
+            if (draggingHandle && held)
+            {
+                float angle = PointerAngle(pointerPosition);
+                float delta = Mathf.DeltaAngle(previousPointerAngle, angle);
+                previousPointerAngle = angle;
+
+                if (Mathf.Abs(delta) < 70f)
+                {
+                    handleRotation = Mathf.Clamp(
+                        handleRotation + Mathf.Max(0f, -delta), 0f, requiredHandleRotation);
+                    SetHandleRotation(handleRotation);
+                }
+
+                if (handleRotation >= requiredHandleRotation)
+                {
+                    draggingHandle = false;
+                    handleTurnComplete = true;
+                }
+            }
+
+            if (released || !held)
+            {
+                draggingHandle = false;
+            }
         }
 
         private IEnumerator AnimateCapsuleAppearance()
@@ -179,6 +290,7 @@ namespace FilmInspiredGames.Burning.C04
         private IEnumerator AnimateCapsuleIdleUntilClicked()
         {
             IsWaitingForOpen = true;
+            CurrentState = "캡슐을 눌러 열기";
             float elapsed = 0f;
 
             while (!openRequested || elapsed < capsuleHold)
@@ -302,6 +414,18 @@ namespace FilmInspiredGames.Burning.C04
             SetScale(rect, scale);
         }
 
+        private void ResetHandle()
+        {
+            if (handleRect == null)
+            {
+                return;
+            }
+
+            handleRect.anchoredPosition = handleStartPosition;
+            handleRect.localRotation = Quaternion.identity;
+            SetScale(handleRect, 1f);
+        }
+
         private static void SetIdlePose(RectTransform rect, float scale, float lift)
         {
             if (rect == null)
@@ -334,6 +458,66 @@ namespace FilmInspiredGames.Burning.C04
                 && normalized.x <= capsuleHitAreaMax.x
                 && normalized.y >= capsuleHitAreaMin.y
                 && normalized.y <= capsuleHitAreaMax.y;
+        }
+
+        private bool IsInsideHandle(Vector2 screenPosition)
+        {
+            if (handleRect == null)
+            {
+                return false;
+            }
+
+            Vector2 center = RectTransformUtility.WorldToScreenPoint(canvasCamera, handleRect.position);
+            float radius = handleInteractionRadius * Screen.width / 540f;
+            return Vector2.Distance(center, screenPosition) <= radius;
+        }
+
+        private float PointerAngle(Vector2 screenPosition)
+        {
+            Vector2 center = RectTransformUtility.WorldToScreenPoint(canvasCamera, handleRect.position);
+            Vector2 direction = screenPosition - center;
+            return Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        }
+
+        private void SetHandleRotation(float clockwiseRotation)
+        {
+            if (handleRect != null)
+            {
+                handleRect.localRotation = Quaternion.Euler(0f, 0f, -clockwiseRotation);
+            }
+        }
+
+        private static void ReadPointer(
+            out Vector2 position,
+            out bool pressed,
+            out bool held,
+            out bool released)
+        {
+            if (Touchscreen.current != null
+                && (Touchscreen.current.primaryTouch.press.isPressed
+                    || Touchscreen.current.primaryTouch.press.wasPressedThisFrame
+                    || Touchscreen.current.primaryTouch.press.wasReleasedThisFrame))
+            {
+                position = Touchscreen.current.primaryTouch.position.ReadValue();
+                pressed = Touchscreen.current.primaryTouch.press.wasPressedThisFrame;
+                held = Touchscreen.current.primaryTouch.press.isPressed;
+                released = Touchscreen.current.primaryTouch.press.wasReleasedThisFrame;
+                return;
+            }
+
+            if (Mouse.current != null)
+            {
+                position = Mouse.current.position.ReadValue();
+                pressed = Mouse.current.leftButton.wasPressedThisFrame;
+                held = Mouse.current.leftButton.isPressed;
+                released = Mouse.current.leftButton.wasReleasedThisFrame;
+                return;
+            }
+
+            position = default;
+            pressed = false;
+            held = false;
+            released = false;
         }
 
         private static void SetScale(RectTransform rect, float scale)

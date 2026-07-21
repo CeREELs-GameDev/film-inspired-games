@@ -1,3 +1,4 @@
+using System.Linq;
 using FilmInspiredGames.Burning.C04;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -13,6 +14,8 @@ namespace FilmInspiredGames.Burning.C04.Editor
     {
         private const string ScenePath = "Assets/Game/Burning/C04/Scenes/Burning_C04_Playable.unity";
         private const string ArtPath = "Assets/Game/Burning/C04/Art/";
+        private const float SourceWidth = 1632f;
+        private const float SourceHeight = 2912f;
 
         [MenuItem("Tools/Burning/Build C04 Playable Scene")]
         public static void BuildAndOpen()
@@ -37,6 +40,10 @@ namespace FilmInspiredGames.Burning.C04.Editor
             RectTransform c04Root = CreateRoot("C04", canvas.transform);
 
             CreateFullScreenImage("Background", c04Root, LoadSprite("C04_Background.png"));
+            CreateSourceAlignedImage(
+                "HandlePanel", c04Root, LoadSprite("C04_HandlePanel.png"), new SourceLayout(331, 1728, 956, 762));
+            Image handle = CreateSourceAlignedImage(
+                "Handle", c04Root, LoadSprite("C04_Handle.png"), new SourceLayout(633, 2053, 368, 79));
             Image capsuleUp = CreateFullScreenImage("CapsuleUp", c04Root, LoadSprite("C04_CapsuleUp.png"));
             Image capsuleDown = CreateFullScreenImage("CapsuleDown", c04Root, LoadSprite("C04_CapsuleDown.png"));
             Image watch = CreateFullScreenImage("Watch", c04Root, LoadSprite("C04_Watch.png"));
@@ -48,15 +55,35 @@ namespace FilmInspiredGames.Burning.C04.Editor
             GameObject controllerObject = new("C04Sequence");
             controllerObject.transform.SetParent(sequenceRoot.transform);
             C04RewardSequenceController controller = controllerObject.AddComponent<C04RewardSequenceController>();
-            ConfigureController(controller, capsuleUp, capsuleDown, watch, capsuleUpGroup, capsuleDownGroup, watchGroup);
+            ConfigureController(controller, handle, capsuleUp, capsuleDown, watch, capsuleUpGroup, capsuleDownGroup, watchGroup);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             Selection.activeGameObject = controllerObject;
             Debug.Log("C04 플레이 씬 생성 완료. Play 버튼을 누르면 보상 연출이 시작됩니다.");
         }
 
+        public static void ValidateScene()
+        {
+            Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            int missingScripts = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
+                .Sum(item => GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(item.gameObject));
+            C04RewardSequenceController controller = Object.FindFirstObjectByType<C04RewardSequenceController>();
+            SerializedObject serialized = controller != null ? new SerializedObject(controller) : null;
+            Object handle = serialized?.FindProperty("handleRect")?.objectReferenceValue;
+
+            if (missingScripts > 0 || controller == null || handle == null)
+            {
+                throw new System.InvalidOperationException(
+                    $"C04 씬 검사 실패: missingScripts={missingScripts}, controller={controller != null}, handle={handle != null}");
+            }
+
+            Debug.Log("C04 씬 검사 완료: 손잡이 연결 정상, 누락 스크립트 0개");
+        }
+
         private static void ConfigureController(
             C04RewardSequenceController controller,
+            Image handle,
             Image capsuleUp,
             Image capsuleDown,
             Image watch,
@@ -65,6 +92,7 @@ namespace FilmInspiredGames.Burning.C04.Editor
             CanvasGroup watchGroup)
         {
             SerializedObject serialized = new(controller);
+            serialized.FindProperty("handleRect").objectReferenceValue = handle.rectTransform;
             serialized.FindProperty("capsuleUp").objectReferenceValue = capsuleUpGroup;
             serialized.FindProperty("capsuleDown").objectReferenceValue = capsuleDownGroup;
             serialized.FindProperty("capsuleUpRect").objectReferenceValue = capsuleUp.rectTransform;
@@ -136,6 +164,31 @@ namespace FilmInspiredGames.Burning.C04.Editor
             return image;
         }
 
+        private static Image CreateSourceAlignedImage(
+            string name,
+            Transform parent,
+            Sprite sprite,
+            SourceLayout layout)
+        {
+            GameObject imageObject = new(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            RectTransform rect = imageObject.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(
+                layout.Width * 540f / SourceWidth,
+                layout.Height * 960f / SourceHeight);
+            rect.anchoredPosition = new Vector2(
+                (layout.X + layout.Width * 0.5f) * 540f / SourceWidth,
+                -(layout.Y + layout.Height * 0.5f) * 960f / SourceHeight);
+
+            Image image = imageObject.GetComponent<Image>();
+            image.sprite = sprite;
+            image.raycastTarget = false;
+            return image;
+        }
+
         private static RectTransform CreateRoot(string name, Transform parent)
         {
             GameObject root = new(name, typeof(RectTransform));
@@ -179,6 +232,22 @@ namespace FilmInspiredGames.Burning.C04.Editor
         private static Sprite LoadSprite(string fileName)
         {
             return AssetDatabase.LoadAssetAtPath<Sprite>(ArtPath + fileName);
+        }
+
+        private readonly struct SourceLayout
+        {
+            public SourceLayout(float x, float y, float width, float height)
+            {
+                X = x;
+                Y = y;
+                Width = width;
+                Height = height;
+            }
+
+            public float X { get; }
+            public float Y { get; }
+            public float Width { get; }
+            public float Height { get; }
         }
     }
 }
