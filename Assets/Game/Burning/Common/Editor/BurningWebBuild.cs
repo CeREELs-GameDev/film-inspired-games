@@ -46,6 +46,9 @@ namespace FilmInspiredGames.Burning.Editor
                 throw new BuildFailedException($"웹 빌드 실패: {report.summary.result}");
             }
 
+            string indexPath = Path.Combine(OutputPath, "index.html");
+            string buildVersion = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+            File.WriteAllText(indexPath, File.ReadAllText(indexPath).Replace("BUILD_VERSION_TOKEN", buildVersion));
             File.WriteAllText(Path.Combine(OutputPath, ".nojekyll"), string.Empty);
             Debug.Log($"웹 빌드 완료: {OutputPath} ({report.summary.totalSize / 1024f / 1024f:F1} MB)");
         }

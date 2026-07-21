@@ -32,7 +32,8 @@
       const progress = document.querySelector("#progress");
       const warning = document.querySelector("#warning");
       const buildUrl = "Build";
-      const loaderUrl = buildUrl + "/{{{ LOADER_FILENAME }}}";
+      const buildVersion = "BUILD_VERSION_TOKEN";
+      const loaderUrl = buildUrl + "/{{{ LOADER_FILENAME }}}?v=" + buildVersion;
 
       function showBanner(message, type) {
         const item = document.createElement("div");
@@ -43,13 +44,13 @@
 
       const config = {
         arguments: [],
-        dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}",
-        frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+        dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}?v=" + buildVersion,
+        frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}?v=" + buildVersion,
 #if USE_THREADS
-        workerUrl: buildUrl + "/{{{ WORKER_FILENAME }}}",
+        workerUrl: buildUrl + "/{{{ WORKER_FILENAME }}}?v=" + buildVersion,
 #endif
 #if USE_WASM
-        codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}",
+        codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}?v=" + buildVersion,
 #endif
         streamingAssetsUrl: "StreamingAssets",
         companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
