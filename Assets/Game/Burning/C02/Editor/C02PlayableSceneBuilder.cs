@@ -308,7 +308,7 @@ namespace FilmInspiredGames.Burning.C02.Editor
             SerializedObject serialized = new(game);
             serialized.FindProperty("rootCanvas").objectReferenceValue = canvas;
             serialized.FindProperty("dragLayer").objectReferenceValue = dragLayer;
-            serialized.FindProperty("snapDistance").floatValue = 135f;
+            serialized.FindProperty("requiredPlacementOverlap").floatValue = 0.9f;
             serialized.FindProperty("fitBoxToSlot").boolValue = false;
             serialized.FindProperty("preserveLayerAlignment").boolValue = true;
             serialized.FindProperty("alignedTargetPosition").vector2Value = WarehousePosition;

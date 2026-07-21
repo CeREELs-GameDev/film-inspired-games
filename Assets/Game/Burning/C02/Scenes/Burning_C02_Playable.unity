@@ -496,7 +496,7 @@ MonoBehaviour:
   - {fileID: 828050576}
   - {fileID: 461894174}
   - {fileID: 1294127872}
-  snapDistance: 135
+  requiredPlacementOverlap: 0.9
   fitBoxToSlot: 0
   preserveLayerAlignment: 1
   alignedTargetPosition: {x: -324.25, y: 0}

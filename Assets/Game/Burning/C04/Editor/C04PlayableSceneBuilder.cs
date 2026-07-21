@@ -93,6 +93,11 @@ namespace FilmInspiredGames.Burning.C04.Editor
         {
             SerializedObject serialized = new(controller);
             serialized.FindProperty("handleRect").objectReferenceValue = handle.rectTransform;
+            serialized.FindProperty("handleInteractionRadius").floatValue = 110f;
+            serialized.FindProperty("requiredHandleRotation").floatValue = 540f;
+            serialized.FindProperty("handleDownwardSensitivity").floatValue = 0.65f;
+            serialized.FindProperty("handleMaxInputSpeed").floatValue = 360f;
+            serialized.FindProperty("handleVisualFollowSpeed").floatValue = 300f;
             serialized.FindProperty("capsuleUp").objectReferenceValue = capsuleUpGroup;
             serialized.FindProperty("capsuleDown").objectReferenceValue = capsuleDownGroup;
             serialized.FindProperty("capsuleUpRect").objectReferenceValue = capsuleUp.rectTransform;

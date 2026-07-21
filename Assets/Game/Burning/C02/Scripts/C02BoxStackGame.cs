@@ -21,7 +21,7 @@ namespace FilmInspiredGames.Burning.C02
 
         [Header("놓을 자리")]
         [SerializeField] private List<RectTransform> targetSlots = new();
-        [SerializeField, Min(1f)] private float snapDistance = 110f;
+        [SerializeField, Range(0.5f, 1f)] private float requiredPlacementOverlap = 0.9f;
         [SerializeField] private bool fitBoxToSlot;
         [SerializeField] private bool preserveLayerAlignment;
         [SerializeField] private Vector2 alignedTargetPosition;
@@ -161,7 +161,7 @@ namespace FilmInspiredGames.Burning.C02
             }
         }
 
-        internal bool TryPlace(C02DraggableBox box, Vector2 pointerPosition, Camera eventCamera)
+        internal bool TryPlace(C02DraggableBox box, Camera eventCamera)
         {
             if (!interactionEnabled || completed)
             {
@@ -182,9 +182,10 @@ namespace FilmInspiredGames.Burning.C02
                 return false;
             }
 
-            Vector2 slotPosition = RectTransformUtility.WorldToScreenPoint(eventCamera, targetSlot.position);
+            Rect boxRect = box.GetVisibleScreenRect(eventCamera);
+            Rect slotRect = GetScreenRect(targetSlot, eventCamera);
 
-            if (Vector2.Distance(pointerPosition, slotPosition) > snapDistance)
+            if (CalculateOverlap(boxRect, slotRect) < requiredPlacementOverlap)
             {
                 return false;
             }
@@ -200,6 +201,31 @@ namespace FilmInspiredGames.Burning.C02
             }
 
             return true;
+        }
+
+        private static float CalculateOverlap(Rect boxRect, Rect slotRect)
+        {
+            float width = Mathf.Max(0f, Mathf.Min(boxRect.xMax, slotRect.xMax) - Mathf.Max(boxRect.xMin, slotRect.xMin));
+            float height = Mathf.Max(0f, Mathf.Min(boxRect.yMax, slotRect.yMax) - Mathf.Max(boxRect.yMin, slotRect.yMin));
+            float boxArea = boxRect.width * boxRect.height;
+            return boxArea > 0f ? width * height / boxArea : 0f;
+        }
+
+        private static Rect GetScreenRect(RectTransform rectTransform, Camera eventCamera)
+        {
+            Vector3[] corners = new Vector3[4];
+            rectTransform.GetWorldCorners(corners);
+            Vector2 min = RectTransformUtility.WorldToScreenPoint(eventCamera, corners[0]);
+            Vector2 max = min;
+
+            for (int index = 1; index < corners.Length; index++)
+            {
+                Vector2 point = RectTransformUtility.WorldToScreenPoint(eventCamera, corners[index]);
+                min = Vector2.Min(min, point);
+                max = Vector2.Max(max, point);
+            }
+
+            return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
         }
 
         private void ResetPlacementGuides()

@@ -96,6 +96,38 @@ namespace FilmInspiredGames.Burning.C02
             SetInteractable(false);
         }
 
+        internal Rect GetVisibleScreenRect(Camera eventCamera)
+        {
+            EnsureReferences();
+            Rect rect = rectTransform.rect;
+            Vector2 localMin = new(
+                Mathf.Lerp(rect.xMin, rect.xMax, normalizedRaycastMin.x),
+                Mathf.Lerp(rect.yMin, rect.yMax, normalizedRaycastMin.y));
+            Vector2 localMax = new(
+                Mathf.Lerp(rect.xMin, rect.xMax, normalizedRaycastMax.x),
+                Mathf.Lerp(rect.yMin, rect.yMax, normalizedRaycastMax.y));
+            Vector3[] localCorners =
+            {
+                new(localMin.x, localMin.y, 0f),
+                new(localMin.x, localMax.y, 0f),
+                new(localMax.x, localMax.y, 0f),
+                new(localMax.x, localMin.y, 0f)
+            };
+            Vector2 min = RectTransformUtility.WorldToScreenPoint(
+                eventCamera, rectTransform.TransformPoint(localCorners[0]));
+            Vector2 max = min;
+
+            for (int index = 1; index < localCorners.Length; index++)
+            {
+                Vector2 point = RectTransformUtility.WorldToScreenPoint(
+                    eventCamera, rectTransform.TransformPoint(localCorners[index]));
+                min = Vector2.Min(min, point);
+                max = Vector2.Max(max, point);
+            }
+
+            return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+        }
+
         public bool IsRaycastLocationValid(Vector2 screenPoint, Camera eventCamera)
         {
             EnsureReferences();
@@ -152,7 +184,7 @@ namespace FilmInspiredGames.Burning.C02
 
             canvasGroup.blocksRaycasts = true;
 
-            if (!game.TryPlace(this, eventData.position, eventData.pressEventCamera))
+            if (!game.TryPlace(this, eventData.pressEventCamera))
             {
                 ReturnHome();
             }

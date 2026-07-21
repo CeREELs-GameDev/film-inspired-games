@@ -10,9 +10,12 @@ namespace FilmInspiredGames.Burning.C04
     {
         [Header("손잡이")]
         [SerializeField] private RectTransform handleRect;
-        [SerializeField, Min(30f)] private float handleInteractionRadius = 82f;
-        [SerializeField, Min(45f)] private float requiredHandleRotation = 180f;
+        [SerializeField, Min(30f)] private float handleInteractionRadius = 110f;
+        [SerializeField, Min(45f)] private float requiredHandleRotation = 540f;
         [SerializeField, Min(0f)] private float handleCompleteHold = 0.25f;
+        [SerializeField, Range(0.1f, 2f)] private float handleDownwardSensitivity = 0.65f;
+        [SerializeField, Min(90f)] private float handleMaxInputSpeed = 360f;
+        [SerializeField, Min(90f)] private float handleVisualFollowSpeed = 300f;
 
         [Header("캡슐")]
         [SerializeField] private CanvasGroup capsuleUp;
@@ -64,7 +67,9 @@ namespace FilmInspiredGames.Burning.C04
         private bool handleTurnComplete;
         private bool hasTouchedHandle;
         private float previousPointerAngle;
+        private Vector2 previousPointerPosition;
         private float handleRotation;
+        private float displayedHandleRotation;
         private Vector2 handleStartPosition;
         private Camera canvasCamera;
 
@@ -160,6 +165,7 @@ namespace FilmInspiredGames.Burning.C04
             handleTurnComplete = false;
             hasTouchedHandle = false;
             handleRotation = 0f;
+            displayedHandleRotation = 0f;
             CurrentState = "손잡이 돌리기 대기";
         }
 
@@ -210,7 +216,7 @@ namespace FilmInspiredGames.Burning.C04
 
             IsWaitingForHandle = false;
             CurrentState = "손잡이 회전 완료";
-            float start = handleRotation;
+            float start = displayedHandleRotation;
             float elapsed = 0f;
             const float snapDuration = 0.28f;
 
@@ -224,6 +230,7 @@ namespace FilmInspiredGames.Burning.C04
             }
 
             handleRotation = requiredHandleRotation;
+            displayedHandleRotation = requiredHandleRotation;
             SetHandleRotation(handleRotation);
         }
 
@@ -234,6 +241,7 @@ namespace FilmInspiredGames.Burning.C04
                 draggingHandle = true;
                 hasTouchedHandle = true;
                 previousPointerAngle = PointerAngle(pointerPosition);
+                previousPointerPosition = pointerPosition;
                 SetHandleRotation(handleRotation);
             }
 
@@ -241,25 +249,43 @@ namespace FilmInspiredGames.Burning.C04
             {
                 float angle = PointerAngle(pointerPosition);
                 float delta = Mathf.DeltaAngle(previousPointerAngle, angle);
+                Vector2 pointerDelta = pointerPosition - previousPointerPosition;
                 previousPointerAngle = angle;
+                previousPointerPosition = pointerPosition;
 
+                float clockwiseRotation = 0f;
                 if (Mathf.Abs(delta) < 70f)
                 {
-                    handleRotation = Mathf.Clamp(
-                        handleRotation + Mathf.Max(0f, -delta), 0f, requiredHandleRotation);
-                    SetHandleRotation(handleRotation);
+                    clockwiseRotation = Mathf.Max(0f, -delta);
                 }
 
-                if (handleRotation >= requiredHandleRotation)
+                // 중심에서 아래로 당겨도 손잡이가 자연스럽게 돌아가도록 보완
+                float downwardRotation = Mathf.Max(0f, -pointerDelta.y) * handleDownwardSensitivity;
+                float maxRotationDelta = handleMaxInputSpeed * Time.unscaledDeltaTime;
+                float rotationDelta = Mathf.Min(
+                    Mathf.Max(clockwiseRotation, downwardRotation), maxRotationDelta);
+                if (rotationDelta > 0f)
                 {
-                    draggingHandle = false;
-                    handleTurnComplete = true;
+                    handleRotation = Mathf.Clamp(handleRotation + rotationDelta, 0f, requiredHandleRotation);
                 }
             }
 
             if (released || !held)
             {
                 draggingHandle = false;
+            }
+
+            displayedHandleRotation = Mathf.MoveTowards(
+                displayedHandleRotation,
+                handleRotation,
+                handleVisualFollowSpeed * Time.unscaledDeltaTime);
+            SetHandleRotation(displayedHandleRotation);
+
+            if (handleRotation >= requiredHandleRotation
+                && Mathf.Approximately(displayedHandleRotation, requiredHandleRotation))
+            {
+                draggingHandle = false;
+                handleTurnComplete = true;
             }
         }
 

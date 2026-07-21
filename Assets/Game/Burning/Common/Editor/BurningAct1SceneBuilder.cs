@@ -18,6 +18,8 @@ namespace FilmInspiredGames.Burning.Editor
         private const string C08ScenePath = "Assets/Game/Burning/C08/Scenes/Burning_C08_C12_Playable.unity";
         private const string C13ScenePath = "Assets/Game/Burning/C13/Scenes/Burning_C13_Playable.unity";
         private const string C14ScenePath = "Assets/Game/Burning/C14/Scenes/Burning_C14_Playable.unity";
+        private const string C15ScenePath = "Assets/Game/Burning/C15/Scenes/Burning_C15_Playable.unity";
+        private const string C16ScenePath = "Assets/Game/Burning/C16/Scenes/Burning_C16_C18_Playable.unity";
         private const string C01ArtPath = "Assets/Game/Burning/C01/Art/C01_Walk.png";
         private const string C03FirstPath = "Assets/Game/Burning/C03/Art/C03_First.png";
         private const string C03SecondPath = "Assets/Game/Burning/C03/Art/C03_Second.png";
@@ -353,8 +355,12 @@ namespace FilmInspiredGames.Burning.Editor
                     && item.path != C06ScenePath
                     && item.path != C08ScenePath
                     && item.path != C13ScenePath
-                    && item.path != C14ScenePath)
+                    && item.path != C14ScenePath
+                    && item.path != C15ScenePath
+                    && item.path != C16ScenePath)
                 .ToList();
+            scenes.Insert(0, new EditorBuildSettingsScene(C16ScenePath, true));
+            scenes.Insert(0, new EditorBuildSettingsScene(C15ScenePath, true));
             scenes.Insert(0, new EditorBuildSettingsScene(C14ScenePath, true));
             scenes.Insert(0, new EditorBuildSettingsScene(C13ScenePath, true));
             scenes.Insert(0, new EditorBuildSettingsScene(C08ScenePath, true));

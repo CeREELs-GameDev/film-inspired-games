@@ -13,6 +13,8 @@ namespace FilmInspiredGames.Burning.Editor
         private const string C08ScenePath = "Assets/Game/Burning/C08/Scenes/Burning_C08_C12_Playable.unity";
         private const string C13ScenePath = "Assets/Game/Burning/C13/Scenes/Burning_C13_Playable.unity";
         private const string C14ScenePath = "Assets/Game/Burning/C14/Scenes/Burning_C14_Playable.unity";
+        private const string C15ScenePath = "Assets/Game/Burning/C15/Scenes/Burning_C15_Playable.unity";
+        private const string C16ScenePath = "Assets/Game/Burning/C16/Scenes/Burning_C16_C18_Playable.unity";
         private const string OutputPath = "Builds/Web";
 
         [MenuItem("Tools/Burning/Build Web for GitHub Pages")]
@@ -28,7 +30,11 @@ namespace FilmInspiredGames.Burning.Editor
 
             BuildPlayerOptions options = new()
             {
-                scenes = new[] { ScenePath, C06ScenePath, C08ScenePath, C13ScenePath, C14ScenePath },
+                scenes = new[]
+                {
+                    ScenePath, C06ScenePath, C08ScenePath, C13ScenePath,
+                    C14ScenePath, C15ScenePath, C16ScenePath
+                },
                 locationPathName = OutputPath,
                 target = BuildTarget.WebGL,
                 options = BuildOptions.None

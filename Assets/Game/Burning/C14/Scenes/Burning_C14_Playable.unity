@@ -579,6 +579,8 @@ MonoBehaviour:
   - {fileID: 1550822400}
   - {fileID: 1542537440}
   - {fileID: 2035410866}
+  nextSceneName: Burning_C15_Playable
+  transitionToBlackDuration: 1.1
 --- !u!114 &427703410
 MonoBehaviour:
   m_ObjectHideFlags: 0

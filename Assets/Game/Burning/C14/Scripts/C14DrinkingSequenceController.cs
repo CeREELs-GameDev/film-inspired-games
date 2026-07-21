@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace FilmInspiredGames.Burning.C14
@@ -29,6 +30,10 @@ namespace FilmInspiredGames.Burning.C14
         [Header("Part 2")]
         [SerializeField] private CanvasGroup part2SojuSet;
         [SerializeField] private CanvasGroup[] part2Images;
+
+        [Header("다음 장면")]
+        [SerializeField] private string nextSceneName = "Burning_C15_Playable";
+        [SerializeField, Min(0.1f)] private float transitionToBlackDuration = 1.1f;
 
         private Stage stage = Stage.Intro;
         private float glassFill;
@@ -213,7 +218,48 @@ namespace FilmInspiredGames.Burning.C14
             yield return PlayPart2Cuts();
             stage = Stage.Complete;
             CurrentState = "C14 완료";
+            yield return new WaitForSecondsRealtime(0.55f);
+            yield return TransitionToC15();
             sequence = null;
+        }
+
+        private IEnumerator TransitionToC15()
+        {
+            CurrentState = "검은 화면으로 전환";
+            CanvasGroup overlay = CreateBlackOverlay();
+            yield return Fade(overlay, 0f, 1f, transitionToBlackDuration);
+            yield return new WaitForSecondsRealtime(0.35f);
+
+            if (string.IsNullOrWhiteSpace(nextSceneName)
+                || !Application.CanStreamedLevelBeLoaded(nextSceneName))
+            {
+                Debug.LogError($"C15 씬을 불러올 수 없음: {nextSceneName}", this);
+                yield break;
+            }
+
+            SceneManager.LoadScene(nextSceneName);
+        }
+
+        private CanvasGroup CreateBlackOverlay()
+        {
+            Canvas canvas = GetComponentInParent<Canvas>();
+            GameObject overlayObject = new(
+                "TransitionToC15", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup));
+            RectTransform overlayRect = overlayObject.GetComponent<RectTransform>();
+            overlayRect.SetParent(canvas.transform, false);
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.offsetMin = Vector2.zero;
+            overlayRect.offsetMax = Vector2.zero;
+            overlayRect.SetAsLastSibling();
+
+            Image image = overlayObject.GetComponent<Image>();
+            image.color = Color.black;
+            image.raycastTarget = true;
+
+            CanvasGroup group = overlayObject.GetComponent<CanvasGroup>();
+            group.alpha = 0f;
+            return group;
         }
 
         private IEnumerator PlayPart2Cuts()

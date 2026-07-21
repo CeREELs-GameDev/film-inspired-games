@@ -164,9 +164,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   handleRect: {fileID: 1076513948}
-  handleInteractionRadius: 82
-  requiredHandleRotation: 180
+  handleInteractionRadius: 110
+  requiredHandleRotation: 540
   handleCompleteHold: 0.25
+  handleDownwardSensitivity: 0.65
+  handleMaxInputSpeed: 360
+  handleVisualFollowSpeed: 300
   capsuleUp: {fileID: 1889412778}
   capsuleDown: {fileID: 2046576116}
   capsuleUpRect: {fileID: 1889412775}
@@ -783,7 +786,7 @@ MonoBehaviour:
   - {fileID: 828050576}
   - {fileID: 461894174}
   - {fileID: 1294127872}
-  snapDistance: 135
+  requiredPlacementOverlap: 0.9
   fitBoxToSlot: 0
   preserveLayerAlignment: 1
   alignedTargetPosition: {x: -324.25, y: 0}

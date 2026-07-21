@@ -86,6 +86,8 @@ namespace FilmInspiredGames.Burning.C14.Editor
             Set(serialized, "glass1Liquid", glass1.Liquid);
             Set(serialized, "glass2Liquid", glass2.Liquid);
             Set(serialized, "part2SojuSet", part2Set);
+            serialized.FindProperty("nextSceneName").stringValue = "Burning_C15_Playable";
+            serialized.FindProperty("transitionToBlackDuration").floatValue = 1.1f;
             SerializedProperty cutArray = serialized.FindProperty("part2Images");
             cutArray.arraySize = cuts.Length;
             for (int i = 0; i < cuts.Length; i++)
